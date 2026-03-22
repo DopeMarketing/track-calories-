@@ -1,0 +1,114 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { createBrowserClient } from '@supabase/ssr'
+import { useRouter } from 'next/navigation'
+
+export default function SignUpPage() {
+  const [email, setEmail] = useState<string>('')
+  const [password, setPassword] = useState<string>('')
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string>('')
+  const [message, setMessage] = useState<string>('')
+  const router = useRouter()
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    setMessage('')
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    })
+
+    if (error) {
+      setError(error.message)
+    } else {
+      setMessage('Check your email for the confirmation link!')
+      setTimeout(() => router.push('/login'), 3000)
+    }
+    setLoading(false)
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Sign up for Track Calories
+          </h2>
+        </div>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email address
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter your email"
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter your password (min 6 characters)"
+                minLength={6}
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="text-red-600 text-sm text-center">{error}</div>
+          )}
+
+          {message && (
+            <div className="text-green-600 text-sm text-center">{message}</div>
+          )}
+
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            >
+              {loading ? 'Creating account...' : 'Sign up'}
+            </button>
+          </div>
+
+          <div className="text-center">
+            <Link
+              href="/login"
+              className="text-blue-600 hover:text-blue-500"
+            >
+              Already have an account? Sign in
+            </Link>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
